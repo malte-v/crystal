@@ -57,6 +57,9 @@ module Crystal
         true
       when StaticArrayInstanceType
         self.element_type.has_inner_pointers?
+      when VectorInstanceType
+        # A vector can only contain numbers or booleans which don't have pointers
+        false
       when TupleInstanceType
         self.tuple_types.any? &.has_inner_pointers?
       when NamedTupleInstanceType

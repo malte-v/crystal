@@ -50,6 +50,10 @@ class Crystal::CodeGenVisitor
               codegen_primitive_external_var_set node, target_def, call_args
             when "external_var_get"
               codegen_primitive_external_var_get node, target_def, call_args
+            when "vector_extract"
+              codegen_primitive_vector_extract node, target_def, call_args
+            when "vector_insert"
+              codegen_primitive_vector_insert node, target_def, call_args
             when "object_id"
               codegen_primitive_object_id node, target_def, call_args
             when "object_crystal_type_id"
@@ -936,6 +940,26 @@ class Crystal::CodeGenVisitor
   def get_external_var(external)
     name = external.as(External).real_name
     declare_lib_var name, external.type, external.thread_local?
+  end
+
+  def codegen_primitive_vector_extract(node, target_def, call_args)
+    vector_ptr = call_args[0]
+    index = call_args[1]
+
+    vector = load vector_ptr
+    builder.extract_element vector, index
+  end
+
+  def codegen_primitive_vector_insert(node, target_def, call_args)
+    vector_ptr = call_args[0]
+    index = call_args[1]
+    value = call_args[2]
+      
+    vector = load vector_ptr
+    result = builder.insert_element vector, value, index
+    store result, vector_ptr
+
+    value
   end
 
   def codegen_primitive_object_id(node, external, call_args)

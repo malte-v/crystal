@@ -49,7 +49,7 @@ struct LLVM::Type
     Type.new LibLLVM.array_type(self, count)
   end
 
-  def vector(count) : self
+  def vector(count)
     Type.new LibLLVM.vector_type(self, count)
   end
 

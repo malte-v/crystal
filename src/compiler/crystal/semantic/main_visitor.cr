@@ -2381,6 +2381,10 @@ module Crystal
         # Nothing to do
       when "enum_new"
         # Nothing to do
+      when "vector_extract"
+        # Nothing to do
+      when "vector_insert"
+        # Nothing to do
       when "throw_info"
         node.type = program.pointer_of(program.void)
       else

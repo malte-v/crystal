@@ -182,6 +182,12 @@ module Crystal
       pointed_type.array type.size.as(NumberLiteral).value.to_i
     end
 
+    private def create_llvm_type(type : VectorInstanceType, wants_size)
+      pointed_type = llvm_embedded_type(type.element_type, wants_size)
+      pointed_type = @llvm_context.int8 if pointed_type.void?
+      pointed_type.vector type.size.as(NumberLiteral).value.to_i
+    end
+
     private def create_llvm_type(type : TupleInstanceType, wants_size)
       llvm_name = llvm_name(type, wants_size)
 

@@ -1,7 +1,7 @@
 require "./semantic_visitor"
 
 # Interprets math expressions like 1 + 2 for enum values and
-# constant values that are being used for the N of a StaticArray.
+# constant values that are being used for the N of a StaticArray or Vector.
 struct Crystal::MathInterpreter
   def initialize(@path_lookup : Type, @visitor : SemanticVisitor? = nil, @target_type : IntegerType? = nil)
   end

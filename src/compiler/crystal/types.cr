@@ -2158,6 +2158,41 @@ module Crystal
     end
   end
 
+  # The non-instantiated Vector(T, N) type.
+  class VectorType < GenericClassType
+    def new_generic_instance(program, generic_type, type_vars)
+      n = type_vars["N"]
+
+      unless n.is_a?(Var) && n.type.is_a?(TypeParameter)
+        unless n.is_a?(NumberLiteral)
+          raise TypeException.new "can't instantiate Vector(T, N) with N = #{n.type} (N must be an integer)"
+        end
+
+        value = n.value.to_i
+        if value < 0
+          raise TypeException.new "can't instantiate Vector(T, N) with N = #{value} (N must be positive)"
+        end
+      end
+
+      VectorInstanceType.new program, generic_type, program.struct, type_vars
+    end
+  end
+
+  # An instantiated vector type, like Vector(UInt8, 256)
+  class VectorInstanceType < GenericClassInstanceType
+    def var
+      type_vars["T"]
+    end
+
+    def size
+      type_vars["N"]
+    end
+
+    def element_type
+      var.type
+    end
+  end
+
   # The non-instantiated Proc(*T, R) type.
   class ProcType < GenericClassType
     @splat_index = 0
