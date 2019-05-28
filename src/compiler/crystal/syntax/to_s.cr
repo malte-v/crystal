@@ -877,7 +877,6 @@ module Crystal
           @str << '*'
           return false
         when "StaticArray"
-        when "Vector"
           if node.type_vars.size == 2
             node.type_vars[0].accept self
             @str << '['

@@ -2158,40 +2158,53 @@ module Crystal
     end
   end
 
-  # The non-instantiated Vector(T, N) type.
-  class VectorType < GenericClassType
-    def new_generic_instance(program, generic_type, type_vars)
-      n = type_vars["N"]
+  abstract class VectorType < GenericClassType
+  end
 
-      unless n.is_a?(Var) && n.type.is_a?(TypeParameter)
-        unless n.is_a?(NumberLiteral)
-          raise TypeException.new "can't instantiate Vector(T, N) with N = #{n.type} (N must be an integer)"
-        end
+  abstract class VectorInstanceType < GenericClassInstanceType
+    abstract def element_type
+  end
 
-        value = n.value.to_i
-        if value < 0
-          raise TypeException.new "can't instantiate Vector(T, N) with N = #{value} (N must be positive)"
-        end
+  {% for type in %w(Integer Float Bool) %}
+    # The non-instantiated Vector(N) type.
+    class {{type.id}}VectorType < VectorType
+      getter element_type : {{type.id}}Type
+
+      def initialize(program, namespace, name, superclass, @type_vars : Array(String), @element_type : {{type.id}}Type, add_subclass = true)
+        super(program, namespace, name, superclass, @type_vars, add_subclass)
       end
 
-      VectorInstanceType.new program, generic_type, program.struct, type_vars
+      def new_generic_instance(program, generic_type, type_vars)
+        n = type_vars["N"]
+      
+        unless n.is_a?(Var) && n.type.is_a?(TypeParameter)
+          unless n.is_a?(NumberLiteral)
+            raise TypeException.new "can't instantiate Vector(N) with N = #{n.type} (N must be an integer)"
+          end
+        
+          value = n.value.to_i
+          if value < 0
+            raise TypeException.new "can't instantiate Vector(N) with N = #{value} (N must be positive)"
+          end
+        end
+      
+        {{type.id}}VectorInstanceType.new program, generic_type, program.struct, type_vars
+      end
     end
-  end
 
-  # An instantiated vector type, like Vector(UInt8, 256)
-  class VectorInstanceType < GenericClassInstanceType
-    def var
-      type_vars["T"]
-    end
+    # An instantiated vector type, like Vector(256)
+    class {{type.id}}VectorInstanceType < VectorInstanceType
+      def size
+        type_vars["N"]
+      end
 
-    def size
-      type_vars["N"]
-    end
+      def element_type
+        generic_type.as({{type.id}}VectorType).element_type
+      end
 
-    def element_type
-      var.type
+      forward_missing_to generic_type.as({{type.id}}VectorType).element_type
     end
-  end
+  {% end %}
 
   # The non-instantiated Proc(*T, R) type.
   class ProcType < GenericClassType

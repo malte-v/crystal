@@ -943,21 +943,18 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_vector_extract(node, target_def, call_args)
-    vector_ptr = call_args[0]
     index = call_args[1]
-
-    vector = load vector_ptr
+    vector = load call_args[0]
     builder.extract_element vector, index
   end
 
   def codegen_primitive_vector_insert(node, target_def, call_args)
-    vector_ptr = call_args[0]
+    vector = load call_args[0]
     index = call_args[1]
     value = call_args[2]
-      
-    vector = load vector_ptr
+    
     result = builder.insert_element vector, value, index
-    store result, vector_ptr
+    store result, call_args[0]
 
     value
   end

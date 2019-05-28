@@ -126,7 +126,7 @@ module Crystal
 
     # If `true` compiler will error if warnings are found.
     property error_on_warnings : Bool = false
-
+    
     def initialize
       super(self, self, "main")
 
@@ -189,10 +189,6 @@ module Crystal
       static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
       static_array.can_be_stored = false
 
-      types["Vector"] = vector = @vector = VectorType.new self, self, "Vector", value, ["T", "N"]
-      vector.struct = true
-      vector.can_be_stored = false
-
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.declare_instance_var("@bytesize", int32)
       string.declare_instance_var("@length", int32)
@@ -218,6 +214,38 @@ module Crystal
       types["Proc"] = @proc = ProcType.new self, self, "Proc", value, ["T", "R"]
       types["Union"] = @union = GenericUnionType.new self, self, "Union", value, ["T"]
       types["Crystal"] = @crystal = NonGenericModuleType.new self, self, "Crystal"
+
+      # Vector types for intergers, floats and booleans
+      {% for type, internal in {
+        "Int8" => "int8",
+        "Int16" => "int16",
+        "Int32" => "int32",
+        "Int64" => "int64",
+        "Int128" => "int128",
+        "UInt8" => "uint8",
+        "UInt16" => "uint16",
+        "UInt32" => "uint32",
+        "UInt64" => "uint64",
+        "UInt128" => "uint128"
+      } %}
+        types["{{type.id}}::Vector"] = vec_{{internal.id}} = @vec_{{internal.id}} = IntegerVectorType.new self, {{internal.id}}, "Vector", value, ["N"], {{internal.id}}
+        vec_{{internal.id}}.struct = true
+        vec_{{internal.id}}.can_be_stored = false
+      {% end %}
+
+      {% for type, internal in {
+        "Float32" => "float32",
+        "Float64" => "float64",
+      } %}
+        types["{{type.id}}::Vector"] = vec_{{internal.id}} = @vec_{{internal.id}} = FloatVectorType.new self, {{internal.id}}, "Vector", value, ["N"], {{internal.id}}
+        vec_{{internal.id}}.struct = true
+        vec_{{internal.id}}.can_be_stored = false
+      {% end %}
+
+      types["Bool::Vector"] = vec_bool = @vec_bool = BoolVectorType.new self, bool, "Vector", value, ["N"], bool
+      vec_bool.struct = true
+      vec_bool.can_be_stored = false
+      # End of vector types
 
       types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new("argc", int32)
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
@@ -460,7 +488,7 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
                      uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer array static_array
-                     vector exception tuple named_tuple proc union enum range regex crystal
+                     exception tuple named_tuple proc union enum range regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
@@ -469,6 +497,28 @@ module Crystal
         @{{name.id}}.not_nil!
       end
     {% end %}
+
+    {% for name in %w(int8 int16 int32 int64 int128 uint8 uint16 uint32 uint64 uint128) %}
+      @vec_{{name.id}} : IntegerVectorType?
+
+      def vec_{{name.id}}
+        @vec_{{name.id}}.not_nil!
+      end
+    {% end %}
+
+    {% for name in %w(float32 float64) %}
+      @vec_{{name.id}} : FloatVectorType?
+
+      def vec_{{name.id}}
+        @vec_{{name.id}}.not_nil!
+      end
+    {% end %}
+
+    @vec_bool : BoolVectorType?
+
+    def vec_bool
+      @vec_bool.not_nil!
+    end
 
     # Returns the `Nil` type
     def nil_type
