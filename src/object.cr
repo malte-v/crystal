@@ -71,7 +71,7 @@ class Object
   #   hasher
   # end
   # ```
-  ##abstract def hash(hasher) TODO: uncomment
+  abstract def hash(hasher)
 
   # Generates an `UInt64` hash value for this object.
   #
@@ -102,7 +102,7 @@ class Object
   #
   # An object must never append itself to the io argument,
   # as this will in turn call `to_s(io)` on it.
-  ##abstract def to_s(io : IO) : Nil TODO: uncomment
+  abstract def to_s(io : IO) : Nil
 
   # Returns a `String` representation of this object suitable
   # to be embedded inside other expressions, sometimes providing

@@ -2168,9 +2168,12 @@ module Crystal
   {% for type in %w(Integer Float Bool) %}
     # The non-instantiated Vector(N) type.
     class {{type.id}}VectorType < VectorType
-      getter element_type : {{type.id}}Type
+      def element_type
+        # The element type of a vector is the namespace it is declared in.
+        namespace.as({{type.id}}Type)
+      end
 
-      def initialize(program, namespace, name, superclass, @type_vars : Array(String), @element_type : {{type.id}}Type, add_subclass = true)
+      def initialize(program, namespace, name, superclass, @type_vars : Array(String), add_subclass = true)
         super(program, namespace, name, superclass, @type_vars, add_subclass)
       end
 
@@ -2198,10 +2201,9 @@ module Crystal
         type_vars["N"]
       end
 
-      def element_type
-        generic_type.as({{type.id}}VectorType).element_type
-      end
+      delegate element_type, to: generic_type.as({{type.id}}VectorType)
 
+      # This allows us to use the same codegen functions for scalars and vectors
       forward_missing_to generic_type.as({{type.id}}VectorType).element_type
     end
   {% end %}

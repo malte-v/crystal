@@ -228,7 +228,7 @@ module Crystal
         "UInt64" => "uint64",
         "UInt128" => "uint128"
       } %}
-        types["{{type.id}}::Vector"] = vec_{{internal.id}} = @vec_{{internal.id}} = IntegerVectorType.new self, {{internal.id}}, "Vector", value, ["N"], {{internal.id}}
+        {{internal.id}}.types["Vector"] = vec_{{internal.id}} = IntegerVectorType.new self, {{internal.id}}, "Vector", value, ["N"]
         vec_{{internal.id}}.struct = true
         vec_{{internal.id}}.can_be_stored = false
       {% end %}
@@ -237,12 +237,12 @@ module Crystal
         "Float32" => "float32",
         "Float64" => "float64",
       } %}
-        types["{{type.id}}::Vector"] = vec_{{internal.id}} = @vec_{{internal.id}} = FloatVectorType.new self, {{internal.id}}, "Vector", value, ["N"], {{internal.id}}
+        {{internal.id}}.types["Vector"] = vec_{{internal.id}} = FloatVectorType.new self, {{internal.id}}, "Vector", value, ["N"]
         vec_{{internal.id}}.struct = true
         vec_{{internal.id}}.can_be_stored = false
       {% end %}
 
-      types["Bool::Vector"] = vec_bool = @vec_bool = BoolVectorType.new self, bool, "Vector", value, ["N"], bool
+      bool.types["Vector"] = vec_bool = BoolVectorType.new self, bool, "Vector", value, ["N"]
       vec_bool.struct = true
       vec_bool.can_be_stored = false
       # End of vector types
@@ -498,27 +498,11 @@ module Crystal
       end
     {% end %}
 
-    {% for name in %w(int8 int16 int32 int64 int128 uint8 uint16 uint32 uint64 uint128) %}
-      @vec_{{name.id}} : IntegerVectorType?
-
+    {% for name in %w(int8 int16 int32 int64 int128 uint8 uint16 uint32 uint64 uint128 float32 float64 bool) %}
       def vec_{{name.id}}
         @vec_{{name.id}}.not_nil!
       end
     {% end %}
-
-    {% for name in %w(float32 float64) %}
-      @vec_{{name.id}} : FloatVectorType?
-
-      def vec_{{name.id}}
-        @vec_{{name.id}}.not_nil!
-      end
-    {% end %}
-
-    @vec_bool : BoolVectorType?
-
-    def vec_bool
-      @vec_bool.not_nil!
-    end
 
     # Returns the `Nil` type
     def nil_type
