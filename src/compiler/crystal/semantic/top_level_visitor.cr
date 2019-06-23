@@ -72,6 +72,16 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
               node.raise "type vars must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
             end
           end
+          if restriction = node.generic_restriction
+            type_restriction = type.restriction
+            if type_restriction
+              if restriction != type_restriction
+                restriction.raise "generic restriction must be '#{type_restriction}', not '#{restriction}'"
+              end
+            else
+              restriction.raise "#{type.type_desc} #{name} doesn't have a generic restriction"
+            end
+          end
         else
           node.raise "#{name} is not a generic #{type.type_desc}"
         end
@@ -81,6 +91,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if type_vars = node.type_vars
         type = GenericClassType.new @program, scope, name, nil, type_vars, false
         type.splat_index = node.splat_index
+        type.restriction = node.generic_restriction
       else
         type = NonGenericClassType.new @program, scope, name, nil, false
       end
@@ -221,10 +232,36 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       type = type.as(ModuleType)
+
+      if type_vars = node.type_vars
+        if type.is_a?(GenericType)
+          type_type_vars = type.type_vars
+          if type_vars != type_type_vars
+            if type_type_vars.size == 1
+              node.raise "type var must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
+            else
+              node.raise "type vars must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
+            end
+          end
+          if restriction = node.generic_restriction
+            type_restriction = type.restriction
+            if type_restriction
+              if restriction != type_restriction
+                restriction.raise "generic restriction must be '#{type_restriction}', not '#{restriction}'"
+              end
+            else
+              restriction.raise "#{type.type_desc} #{name} doesn't have a generic restriction"
+            end
+          end
+        else
+          node.raise "#{name} is not a generic #{type.type_desc}"
+        end
+      end
     else
       if type_vars = node.type_vars
         type = GenericModuleType.new @program, scope, name, type_vars
         type.splat_index = node.splat_index
+        type.restriction = node.generic_restriction
       else
         type = NonGenericModuleType.new @program, scope, name
       end

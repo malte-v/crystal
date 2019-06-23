@@ -1566,9 +1566,16 @@ module Crystal
           superclass = parse_ident
         end
       end
+
+      generic_restriction = nil
+      if type_vars && @token.keyword?(:where)
+        next_token_skip_space_or_newline
+        generic_restriction = parse_expression
+      end
+
       skip_statement_end
 
-      body = push_visbility { parse_expressions }
+      body = push_visibility { parse_expressions }
 
       end_location = token_end_location
       check_ident :end
@@ -1578,7 +1585,7 @@ module Crystal
 
       @type_nest -= 1
 
-      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, splat_index
+      class_def = ClassDef.new name, body, superclass, type_vars, generic_restriction, is_abstract, is_struct, splat_index
       class_def.doc = doc
       class_def.name_location = name_location
       class_def.end_location = end_location
@@ -1641,9 +1648,16 @@ module Crystal
       skip_space
 
       type_vars, splat_index = parse_type_vars
+
+      generic_restriction = nil
+      if type_vars && @token.keyword?(:where)
+        next_token_skip_space_or_newline
+        generic_restriction = parse_expression
+      end
+
       skip_statement_end
 
-      body = push_visbility { parse_expressions }
+      body = push_visibility { parse_expressions }
 
       end_location = token_end_location
       check_ident :end
@@ -1653,7 +1667,7 @@ module Crystal
 
       @type_nest -= 1
 
-      module_def = ModuleDef.new name, body, type_vars, splat_index
+      module_def = ModuleDef.new name, body, type_vars, generic_restriction, splat_index
       module_def.doc = doc
       module_def.name_location = name_location
       module_def.end_location = end_location
@@ -5164,7 +5178,7 @@ module Crystal
       name_location = @token.location
       next_token_skip_statement_end
 
-      body = push_visbility { parse_lib_body_expressions }
+      body = push_visibility { parse_lib_body_expressions }
 
       check_ident :end
       end_location = token_end_location
@@ -5844,7 +5858,7 @@ module Crystal
       name == "self" || @def_vars.last.includes?(name)
     end
 
-    def push_visbility
+    def push_visibility
       old_visibility = @visibility
       @visibility = nil
       value = yield

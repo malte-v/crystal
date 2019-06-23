@@ -1456,6 +1456,9 @@ module Crystal
     # The type variable names (K and V in Hash).
     getter type_vars : Array(String)
 
+    # The optional generic restriction specified with `where`.
+    property restriction : ASTNode?
+
     # The index of the `*` in the type variables.
     property splat_index : Int32?
 
@@ -1477,7 +1480,10 @@ module Crystal
         return instance
       end
 
+      # Used for instantiating the generic type
       instance_type_vars = {} of String => ASTNode
+      # Passed to the macro interpreter checking the generic restriction
+      restriction_check_vars = {} of String => TypeVar
       type_var_index = 0
       self.type_vars.each_with_index do |name, index|
         if splat_index == index
@@ -1486,9 +1492,11 @@ module Crystal
             types << type_vars[type_var_index]
             type_var_index += 1
           end
-          var = Var.new(name, program.tuple_of(types))
+          type_var = program.tuple_of(types)
+          var = Var.new(name, type_var)
           var.bind_to(var)
           instance_type_vars[name] = var
+          restriction_check_vars[name] = type_var
         else
           type_var = type_vars[type_var_index]
           case type_var
@@ -1499,11 +1507,24 @@ module Crystal
           when ASTNode
             instance_type_vars[name] = type_var
           end
+          restriction_check_vars[name] = type_var
           type_var_index += 1
         end
       end
 
       instance = self.new_generic_instance(program, self, instance_type_vars)
+      
+      # Don't check the generic restriction unless the type is fully instantiated
+      if restriction && !instance.unbound?
+        unless macro_expression_truthy?(program, restriction.not_nil!, self, free_vars: restriction_check_vars)
+          if type_vars.size == 1
+            raise TypeException.new "type var #{type_vars.first} doesn't satisfy restriction '#{restriction}' of #{type_desc} #{name}"
+          else
+            raise TypeException.new "type vars #{type_vars.join ", "} don't satisfy restriction '#{restriction}' of #{type_desc} #{name}"
+          end
+        end
+      end
+
       generic_types[type_vars] = instance
 
       if instance.is_a?(GenericClassInstanceType) && !instance.superclass
@@ -3332,4 +3353,11 @@ private def add_instance_var_initializer(including_types, name, value, meta_vars
       type.add_instance_var_initializer(name, value, meta_vars)
     end
   end
+end
+
+private def macro_expression_truthy?(program, node : Crystal::ASTNode, scope : Crystal::Type, free_vars = nil)
+  interpreter = Crystal::MacroInterpreter.new program, scope, scope, node.location, in_macro: false
+  interpreter.free_vars = free_vars
+  node.accept interpreter
+  interpreter.last.truthy?
 end

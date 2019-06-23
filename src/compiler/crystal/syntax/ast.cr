@@ -1284,7 +1284,7 @@ module Crystal
 
   # Class definition:
   #
-  #     'class' name [ '<' superclass ]
+  #     'class' name [ '<' superclass ] [ 'where' generic restriction ]
   #       body
   #     'end'
   #
@@ -1293,6 +1293,7 @@ module Crystal
     property body : ASTNode
     property superclass : ASTNode?
     property type_vars : Array(String)?
+    property generic_restriction : ASTNode?
     property name_location : Location?
     property doc : String?
     property splat_index : Int32?
@@ -1300,7 +1301,7 @@ module Crystal
     property? struct : Bool
     property visibility = Visibility::Public
 
-    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @splat_index = nil)
+    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @generic_restriction = nil, @abstract = false, @struct = false, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1310,17 +1311,17 @@ module Crystal
     end
 
     def clone_without_location
-      clone = ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @splat_index)
+      clone = ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @generic_restriction.clone, @abstract, @struct, @splat_index)
       clone.name_location = name_location
       clone
     end
 
-    def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @splat_index
+    def_equals_and_hash @name, @body, @superclass, @type_vars, @generic_restriction, @abstract, @struct, @splat_index
   end
 
   # Module definition:
   #
-  #     'module' name
+  #     'module' name [ 'where' generic restriction ]
   #       body
   #     'end'
   #
@@ -1328,12 +1329,13 @@ module Crystal
     property name : Path
     property body : ASTNode
     property type_vars : Array(String)?
+    property generic_restriction : ASTNode?
     property splat_index : Int32?
     property name_location : Location?
     property doc : String?
     property visibility = Visibility::Public
 
-    def initialize(@name, body = nil, @type_vars = nil, @splat_index = nil)
+    def initialize(@name, body = nil, @type_vars = nil, @generic_restriction = nil, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1342,12 +1344,12 @@ module Crystal
     end
 
     def clone_without_location
-      clone = ModuleDef.new(@name, @body.clone, @type_vars.clone, @splat_index)
+      clone = ModuleDef.new(@name, @body.clone, @type_vars.clone, @generic_restriction.clone, @splat_index)
       clone.name_location = name_location
       clone
     end
 
-    def_equals_and_hash @name, @body, @type_vars, @splat_index
+    def_equals_and_hash @name, @body, @type_vars, @generic_restriction, @splat_index
   end
 
   # Annotation definition:

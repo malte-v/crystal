@@ -1139,8 +1139,13 @@ module Crystal
         when 'h'
           case next_char
           when 'e'
-            if next_char == 'n'
+            case next_char
+            when 'n'
               return check_ident_or_keyword(:when, start)
+            when 'r'
+              if next_char == 'e'
+                return check_ident_or_keyword(:where, start)
+              end
             end
           when 'i'
             if next_char == 'l' && next_char == 'e'
